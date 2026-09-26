@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>I Choose You</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy-900:#00182B; --navy-800:#00284A; --navy-700:#0A3A63; --navy-600:#0C4C82;
+    --blue:#00599D; --gold:#FFCB05; --gold-dim:#8a7304;
+    --ink-text:#EAF3FB; --ink-dim:#9FB6CC;
+    color-scheme: dark;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    box-sizing: border-box;
+  }
+  *{box-sizing:border-box;}
+  html{height:100%; scroll-padding-top: env(safe-area-inset-top, 0px);}
+  body{
+    min-height:100%; margin:0; background:var(--navy-900); color:var(--ink-text);
+    font-family:'Inter',sans-serif; display:flex; justify-content:center; padding:28px 20px 60px;
+  }
+  .wrap{width:100%; max-width:960px;}
+
+  .top-result{
+    background:var(--navy-800); border:1px solid var(--gold); border-radius:16px;
+    padding:16px 22px; text-align:center; margin-bottom:22px;
+    font-family:'Fraunces',serif; font-size:1.15rem; font-weight:500;
+    color:var(--ink-dim); transition:transform .3s ease;
+  }
+  .top-result b{color:var(--gold);}
+  .top-result.show{color:var(--ink-text); transform:scale(1.01);}
+
+  header{text-align:center; margin-bottom:26px;}
+  header p{margin:0; color:var(--ink-dim); font-size:1rem;}
+
+  .layout{display:grid; grid-template-columns:1fr; gap:28px;}
+  @media (min-width:760px){ .layout{grid-template-columns: 1.15fr 0.85fr; align-items:start;} }
+  .panel{background:var(--navy-800); border:1px solid var(--navy-700); border-radius:20px; padding:24px;}
+  .wheel-panel{display:flex; flex-direction:column; align-items:center;}
+  .wheel-frame{position:relative; width:min(360px,80vw); aspect-ratio:1/1; margin-bottom:22px;}
+  .pointer{
+    position:absolute; top:-6px; left:50%; transform:translateX(-50%);
+    width:0; height:0; border-left:14px solid transparent; border-right:14px solid transparent;
+    border-top:24px solid var(--gold); z-index:2; filter:drop-shadow(0 2px 3px rgba(0,0,0,.4));
+  }
+  #wheelSvg{width:100%; height:100%; display:block; border-radius:50%;
+    box-shadow:0 0 0 6px var(--navy-700), 0 10px 30px rgba(0,0,0,.5);}
+  #wheelGroup{transform-origin:200px 200px; transition:transform 4.2s cubic-bezier(0.15,0.6,0.1,1);}
+  .hub{fill:var(--navy-900); stroke:var(--gold); stroke-width:3;}
+  .seg-text{font-family:'Inter',sans-serif; font-weight:600;}
+  button{font-family:inherit; cursor:pointer;}
+  #spinBtn{
+    background:var(--gold); color:var(--navy-900); border:none; font-weight:700;
+    font-size:1.05rem; padding:14px 38px; border-radius:999px; transition:transform .15s ease, opacity .15s ease;
+  }
+  #spinBtn:hover:not(:disabled){transform:translateY(-2px);}
+  #spinBtn:disabled{opacity:.5; cursor:not-allowed;}
+  #spinBtn:focus-visible, input:focus-visible, .icon-btn:focus-visible{outline:3px solid var(--gold); outline-offset:2px;}
+  .hint{color:var(--ink-dim); font-size:.85rem; margin-top:10px; text-align:center;}
+  h2{font-family:'Fraunces',serif; font-size:1.3rem; font-weight:700; margin:0 0 4px; color:var(--ink-text);}
+  .panel > p.sub{color:var(--ink-dim); font-size:.88rem; margin:0 0 16px;}
+  .add-row{display:flex; gap:8px; margin-bottom:16px;}
+  .add-row input{
+    flex:1; background:var(--navy-900); border:1px solid var(--navy-600); color:var(--ink-text);
+    border-radius:10px; padding:11px 14px; font-size:.95rem;
+  }
+  .add-row button{
+    background:var(--navy-600); color:var(--ink-text); border:none; border-radius:10px;
+    padding:0 18px; font-weight:600; font-size:.95rem;
+  }
+  .add-row button:hover{background:var(--blue);}
+  ul.roster{list-style:none; margin:0; padding:0; max-height:340px; overflow-y:auto;}
+  ul.roster li{
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    background:var(--navy-900); border:1px solid var(--navy-700); border-radius:10px;
+    padding:10px 12px; margin-bottom:8px; font-size:.95rem;
+  }
+  .icon-btn{background:none; border:none; color:var(--ink-dim); font-size:1.1rem; line-height:1; padding:2px 6px; border-radius:6px;}
+  .icon-btn:hover{color:var(--gold); background:var(--navy-700);}
+  .empty-note{color:#FFB4A8; font-size:.85rem; margin-top:8px;}
+  .sync-status{color:var(--ink-dim); font-size:.78rem; margin:-10px 0 14px;}
+  @media (prefers-reduced-motion: reduce){ #wheelGroup{transition-duration:.6s;} .top-result{transition-duration:.01s;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top-result" id="result" aria-live="polite">Spin to find out who's up.</div>
+
+  <header>
+    <p>Spin the wheel. Repeats are allowed. The wheel has no memory and no mercy.</p>
+  </header>
+
+  <div class="layout">
+    <div class="panel wheel-panel">
+      <div class="wheel-frame">
+        <div class="pointer" aria-hidden="true"></div>
+        <svg id="wheelSvg" viewBox="0 0 400 400">
+          <g id="wheelGroup"></g>
+          <circle class="hub" cx="200" cy="200" r="26"></circle>
+        </svg>
+      </div>
+      <button id="spinBtn">Spin the wheel</button>
+    </div>
+
+    <div class="panel">
+      <h2>Team roster</h2>
+      <p class="sub">Add or remove names. The wheel updates instantly.</p>
+      <p class="sync-status" id="syncStatus">Checking sync…</p>
+      <div class="add-row">
+        <input id="nameInput" type="text" placeholder="Add a name" maxlength="24" aria-label="New name">
+        <button id="addBtn">Add</button>
+      </div>
+      <ul class="roster" id="rosterList"></ul>
+      <p class="empty-note" id="emptyNote" hidden>Add at least 2 names to spin.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const SEGMENTS = [
+    {bg:'#00599D', text:'#FFFFFF'},
+    {bg:'#FFCB05', text:'#00182B'},
+    {bg:'#0C4C82', text:'#FFFFFF'},
+    {bg:'#FFD940', text:'#00182B'}
+  ];
+  const PHRASES = [
+    "{name}, the wheel has spoken. May your standup be short and your excuses shorter.",
+    "Congratulations {name} — you're today's chosen one. No refunds, no exchanges.",
+    "The wheel points at {name}. Destiny is rarely this annoying.",
+    "It's {name}'s turn to wrangle the chaos. Good luck out there.",
+    "{name}, you've been drafted. The team salutes your sacrifice.",
+    "Plot twist: it's {name}. Nobody saw that coming (everyone saw that coming).",
+    "{name} has been summoned. Please rise and accept your fate.",
+    "The wheel giveth, and today it giveth {name} a headache.",
+    "Breaking news: {name} is running the show. Try to sound surprised.",
+    "{name}, the spotlight is yours. Try not to trip over the silence.",
+    "All hail {name}, ruler of today's fifteen minutes.",
+    "The universe has chosen {name}. Blame physics, not us.",
+    "{name} rolled a natural 20 on 'please not me' — and still lost.",
+    "Ladies and gentlemen, {name} will be your host for this fine disaster.",
+    "The wheel has judged {name} worthy. Or unlucky. Hard to say."
+  ];
+  const DEFAULT_NAMES = ["Alex","Sam","Jordan","Taylor","Priya","Chen"];
+  const STORAGE_KEY = "ichooseyou_names_v1";
+
+  let names = loadNames();
+  let rotation = 0;
+  let lastPhrase = -1;
+  let spinning = false;
+  let dbDoc = null;
+  let dbReady = false;
+
+  const wheelGroup = document.getElementById('wheelGroup');
+  const rosterList = document.getElementById('rosterList');
+  const spinBtn = document.getElementById('spinBtn');
+  const resultEl = document.getElementById('result');
+  const emptyNote = document.getElementById('emptyNote');
+  const nameInput = document.getElementById('nameInput');
+  const syncStatus = document.getElementById('syncStatus');
+
+  function loadNames(){
+    try{
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if(raw){ const parsed = JSON.parse(raw); if(Array.isArray(parsed) && parsed.length) return parsed; }
+    }catch(e){}
+    return DEFAULT_NAMES.slice();
+  }
+  function saveLocal(){
+    try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(names)); }catch(e){}
+  }
+  function persistNames(){
+    saveLocal();
+    if(dbReady && dbDoc){ dbDoc.set({ names: names }).catch(() => {}); }
+  }
+
+  async function initSync(){
+    try{
+      if(!window.claude || typeof window.claude.use !== 'function'){
+        syncStatus.textContent = 'Saved on this browser only.';
+        return;
+      }
+      const db = await window.claude.use('db');
+      if(!db){
+        syncStatus.textContent = 'Saved on this browser only.';
+        return;
+      }
+      dbDoc = db.doc('roster/main');
+      dbReady = true;
+      syncStatus.textContent = 'Shared with everyone who opens this page.';
+      dbDoc.onSnapshot((snap) => {
+        const data = snap.exists ? snap.data() : undefined;
+        if(data && Array.isArray(data.names) && data.names.length){
+          names = data.names;
+          saveLocal();
+          refresh();
+        } else if(!snap.exists){
+          dbDoc.set({ names: names }).catch(() => {});
+        }
+      }, () => {
+        dbReady = false;
+        syncStatus.textContent = 'Saved on this browser only.';
+      });
+    }catch(e){
+      syncStatus.textContent = 'Saved on this browser only.';
+    }
+  }
+
+  function polar(cx,cy,r,angleDeg){
+    const rad = (angleDeg - 90) * Math.PI/180;
+    return { x: cx + r*Math.cos(rad), y: cy + r*Math.sin(rad) };
+  }
+
+  function drawWheel(){
+    wheelGroup.innerHTML = '';
+    const n = names.length;
+    if(n === 0) return;
+    const cx=200, cy=200, r=190, seg=360/n;
+    const fontSize = n<=6 ? 17 : n<=10 ? 14 : 11;
+    for(let i=0;i<n;i++){
+      const a0 = i*seg, a1 = (i+1)*seg, center = a0 + seg/2;
+      const p0 = polar(cx,cy,r,a0), p1 = polar(cx,cy,r,a1);
+      const large = seg > 180 ? 1 : 0;
+      const colorSet = SEGMENTS[i % SEGMENTS.length];
+      const path = document.createElementNS('http://www.w3.org/2000/svg','path');
+      const d = n===1
+        ? `M ${cx-r},${cy} A ${r},${r} 0 1 1 ${cx+r},${cy} A ${r},${r} 0 1 1 ${cx-r},${cy} Z`
+        : `M ${cx},${cy} L ${p0.x},${p0.y} A ${r},${r} 0 ${large} 1 ${p1.x},${p1.y} Z`;
+      path.setAttribute('d', d);
+      path.setAttribute('fill', colorSet.bg);
+      wheelGroup.appendChild(path);
+
+      const textR = r*0.62;
+      const tp = polar(cx,cy,textR,center);
+      let flip = center > 90 && center < 270;
+      const text = document.createElementNS('http://www.w3.org/2000/svg','text');
+      text.setAttribute('x', tp.x);
+      text.setAttribute('y', tp.y);
+      text.setAttribute('text-anchor','middle');
+      text.setAttribute('dominant-baseline','middle');
+      text.setAttribute('class','seg-text');
+      text.setAttribute('fill', colorSet.text);
+      text.setAttribute('font-size', fontSize);
+      const rot = flip ? center + 90 + 180 : center + 90;
+      text.setAttribute('transform', `rotate(${rot}, ${tp.x}, ${tp.y})`);
+      text.textContent = names[i].length > 14 ? names[i].slice(0,13)+'…' : names[i];
+      wheelGroup.appendChild(text);
+    }
+  }
+
+  function renderRoster(){
+    rosterList.innerHTML = '';
+    names.forEach((name, idx) => {
+      const li = document.createElement('li');
+      const span = document.createElement('span');
+      span.textContent = name;
+      const btn = document.createElement('button');
+      btn.className = 'icon-btn';
+      btn.setAttribute('aria-label', `Remove ${name}`);
+      btn.textContent = '✕';
+      btn.addEventListener('click', () => { names.splice(idx,1); persistNames(); refresh(); });
+      li.appendChild(span); li.appendChild(btn);
+      rosterList.appendChild(li);
+    });
+    emptyNote.hidden = names.length >= 2;
+    spinBtn.disabled = names.length < 2 || spinning;
+  }
+
+  function refresh(){ drawWheel(); renderRoster(); }
+
+  function addName(){
+    const val = nameInput.value.trim();
+    if(!val) return;
+    names.push(val);
+    nameInput.value = '';
+    persistNames();
+    refresh();
+  }
+
+  document.getElementById('addBtn').addEventListener('click', addName);
+  nameInput.addEventListener('keydown', e => { if(e.key === 'Enter') addName(); });
+
+  spinBtn.addEventListener('click', () => {
+    if(spinning || names.length < 2) return;
+    spinning = true;
+    spinBtn.disabled = true;
+    resultEl.classList.remove('show');
+    resultEl.textContent = "Spinning…";
+
+    const n = names.length;
+    const idx = Math.floor(Math.random()*n);
+    const seg = 360/n;
+    const centerAngle = idx*seg + seg/2;
+    const extraSpins = 6 + Math.floor(Math.random()*3);
+    const currentMod = rotation % 360;
+    const desiredMod = (360 - centerAngle) % 360;
+    let delta = desiredMod - currentMod;
+    if(delta <= 0) delta += 360;
+    rotation += extraSpins*360 + delta;
+    wheelGroup.style.transform = `rotate(${rotation}deg)`;
+
+    const onEnd = () => {
+      wheelGroup.removeEventListener('transitionend', onEnd);
+      let pIdx;
+      do { pIdx = Math.floor(Math.random()*PHRASES.length); } while(pIdx === lastPhrase && PHRASES.length > 1);
+      lastPhrase = pIdx;
+      const chosen = names[idx];
+      resultEl.innerHTML = PHRASES[pIdx].replace('{name}', `<b>${escapeHtml(chosen)}</b>`);
+      resultEl.classList.add('show');
+      spinning = false;
+      spinBtn.disabled = names.length < 2;
+    };
+    wheelGroup.addEventListener('transitionend', onEnd);
+  });
+
+  function escapeHtml(s){
+    return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  refresh();
+  initSync();
+})();
+</script>
+</body>
+</html>
