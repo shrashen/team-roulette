@@ -27,8 +27,8 @@
 
   .top-result{
     background:var(--navy-800); border:1px solid var(--gold); border-radius:16px;
-    padding:16px 22px; text-align:center; margin-bottom:22px;
-    font-family:'Fraunces',serif; font-size:1.15rem; font-weight:500;
+    padding:18px 24px; text-align:center; margin-bottom:22px;
+    font-family:'Fraunces',serif; font-size:1.4rem; font-weight:500;
     color:var(--ink-dim); transition:transform .3s ease;
   }
   .top-result b{color:var(--gold);}
@@ -37,11 +37,10 @@
   header{text-align:center; margin-bottom:26px;}
   header p{margin:0; color:var(--ink-dim); font-size:1rem;}
 
-  .layout{display:grid; grid-template-columns:1fr; gap:28px;}
-  @media (min-width:760px){ .layout{grid-template-columns: 1.15fr 0.85fr; align-items:start;} }
+  .layout{display:grid; grid-template-columns:1fr; gap:24px; max-width:620px; margin:0 auto;}
   .panel{background:var(--navy-800); border:1px solid var(--navy-700); border-radius:20px; padding:24px;}
   .wheel-panel{display:flex; flex-direction:column; align-items:center;}
-  .wheel-frame{position:relative; width:min(360px,80vw); aspect-ratio:1/1; margin-bottom:22px;}
+  .wheel-frame{position:relative; width:min(420px,62vw); aspect-ratio:1/1; margin-bottom:22px;}
   .pointer{
     position:absolute; top:-6px; left:50%; transform:translateX(-50%);
     width:0; height:0; border-left:14px solid transparent; border-right:14px solid transparent;
@@ -83,6 +82,16 @@
   .icon-btn:hover{color:var(--gold); background:var(--navy-700);}
   .empty-note{color:#FFB4A8; font-size:.85rem; margin-top:8px;}
   .sync-status{color:var(--ink-dim); font-size:.78rem; margin:-10px 0 14px;}
+  details.panel{padding:0;}
+  .roster-summary{
+    list-style:none; cursor:pointer; padding:20px 24px; display:flex;
+    align-items:center; justify-content:space-between; user-select:none;
+  }
+  .roster-summary::-webkit-details-marker{display:none;}
+  .roster-summary h2{margin:0;}
+  .chevron{color:var(--gold); font-size:1.1rem; transition:transform .2s ease; flex-shrink:0;}
+  details[open] .chevron{transform:rotate(180deg);}
+  .roster-body{padding:0 24px 22px;}
   @media (prefers-reduced-motion: reduce){ #wheelGroup{transition-duration:.6s;} .top-result{transition-duration:.01s;} }
 </style>
 </head>
@@ -106,17 +115,22 @@
       <button id="spinBtn">Spin the wheel</button>
     </div>
 
-    <div class="panel">
-      <h2>Team roster</h2>
-      <p class="sub">Add or remove names. The wheel updates instantly.</p>
-      <p class="sync-status" id="syncStatus">Checking sync…</p>
-      <div class="add-row">
-        <input id="nameInput" type="text" placeholder="Add a name" maxlength="24" aria-label="New name">
-        <button id="addBtn">Add</button>
+    <details class="panel" id="rosterDetails">
+      <summary class="roster-summary">
+        <h2>Team roster</h2>
+        <span class="chevron" aria-hidden="true">▾</span>
+      </summary>
+      <div class="roster-body">
+        <p class="sub">Add or remove names. The wheel updates instantly.</p>
+        <p class="sync-status" id="syncStatus">Checking sync…</p>
+        <div class="add-row">
+          <input id="nameInput" type="text" placeholder="Add a name" maxlength="24" aria-label="New name">
+          <button id="addBtn">Add</button>
+        </div>
+        <ul class="roster" id="rosterList"></ul>
+        <p class="empty-note" id="emptyNote" hidden>Add at least 2 names to spin.</p>
       </div>
-      <ul class="roster" id="rosterList"></ul>
-      <p class="empty-note" id="emptyNote" hidden>Add at least 2 names to spin.</p>
-    </div>
+    </details>
   </div>
 </div>
 
