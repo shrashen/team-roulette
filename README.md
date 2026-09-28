@@ -3,4 +3,4 @@ This is a wheel of fortune style roulette teams can use to randomize who gets pi
 
 Use the Team Roster section to add or remove team member names from the wheel. 
 
-Check it out https://shrashen.github.io/team-roulette/
+Try it out https://shrashen.github.io/team-roulette/
